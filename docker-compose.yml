@@ -1,0 +1,16 @@
+version: '3.4'
+
+services:
+  db:
+    image: postgres:13
+    container_name: giftcard_db
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: giftcard
+      POSTGRES_DB: giftcard
+      POSTGRES_PORT: 5431
+    volumes:
+      - ./volume:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"

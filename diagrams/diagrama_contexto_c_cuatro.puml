@@ -1,0 +1,18 @@
+@startuml 'Diagrama de Contexto'
+title Diagrama de Contexto
+
+actor Usuario as user
+entity "Caja o Web App" as Caja
+boundary "procesamiento pago" as Control1
+boundary "giftcard" as System 
+
+
+
+user -> Caja : Utiliza
+Caja -> Control1 : "Realiza pagos con Giftcards"
+Control1 -> System : "Consulta saldo y estado de Giftcard"
+System -> Control1 : "Retorna saldo y estado de Giftcard"
+Control1 -> Control1 : "Realiza pago con Giftcard y en caso de ser necesario actualiza saldo y estado de Giftcard"
+Control1 -> Caja : "Actualiza saldo y estado de "
+Caja -> user : "Muestra nuevo saldo y estado de Giftcard"
+@enduml

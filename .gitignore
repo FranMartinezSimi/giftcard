@@ -1,0 +1,11 @@
+volume/
+
+.vscode/
+
+# Ignore the build directory
+
+build/
+
+# Ignore the .idea directory
+
+.idea/
