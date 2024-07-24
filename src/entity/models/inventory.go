@@ -9,12 +9,13 @@ import (
 type Inventory struct {
 	gorm.Model
 	ID           uint `gorm:"primaryKey"`
-	GiftCardID   uint `gorm:"foreignKey:ID"`
+	GiftCards    []GiftCard
 	LocationType string
 	BinLocation  string
 	Quantity     int
 	Status       string
+	CampaignID   uint `gorm:"foreignKey:Campaign.ID"`
+	Campaign     Campaign
 	CreatedAt    time.Time `gorm:"autoCreateTime"`
 	UpdatedAt    time.Time `gorm:"autoUpdateTime"`
-	GiftCard     GiftCard
 }

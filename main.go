@@ -11,5 +11,8 @@ func main() {
 	envs := shared.GetEnvs()
 	shared.Init()
 
-	app.Listen(":" + envs["PORT"])
+	err := app.Listen(":" + envs["PORT"])
+	if err != nil {
+		panic(err)
+	}
 }

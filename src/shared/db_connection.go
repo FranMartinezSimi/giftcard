@@ -11,7 +11,7 @@ import (
 var Env = GetEnvs()
 
 func Init() {
-	db := &gorm.DB{}
+	var db *gorm.DB
 	dsn := "host=" + Env["DB_HOST"] + " user=" + Env["DB_USER"] + " password=" + Env["DB_PASSWORD"] + " dbname=" + Env["DB_NAME"] + " port=" + Env["DB_PORT"] + " sslmode=" + Env["DB_SSLMODE"]
 	var err error
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
