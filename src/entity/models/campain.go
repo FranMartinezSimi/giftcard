@@ -19,3 +19,8 @@ type Campaign struct {
 	UpdatedAt          time.Time `gorm:"autoUpdateTime"`
 	GiftCards          []GiftCard
 }
+
+// Error implements error.
+func (c *Campaign) Error() string {
+	panic("unimplemented")
+}
