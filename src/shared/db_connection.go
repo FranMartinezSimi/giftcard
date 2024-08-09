@@ -10,7 +10,7 @@ import (
 
 var Env = GetEnvs()
 
-func Init() {
+func Init() *gorm.DB {
 	var db *gorm.DB
 	dsn := "host=" + Env["DB_HOST"] + " user=" + Env["DB_USER"] + " password=" + Env["DB_PASSWORD"] + " dbname=" + Env["DB_NAME"] + " port=" + Env["DB_PORT"] + " sslmode=" + Env["DB_SSLMODE"]
 	var err error
@@ -20,6 +20,7 @@ func Init() {
 	}
 	migration(db)
 	log.Println("Database connected")
+	return db
 }
 
 func migration(db *gorm.DB) {

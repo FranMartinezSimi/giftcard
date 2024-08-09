@@ -9,20 +9,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type CampaignRepositoryInterface interface {
-	CreateCampaign(ctx context.Context) error
-	GetCampaign(ctx context.Context, data interface{}) (error, *models.Campaign)
-	UpdateCampaign(ctx context.Context, id int) error
-	SearchFullCampaign(ctx context.Context, data interface{}) error
-	DeleteCampaign(ctx context.Context, id int) error
-}
-
 type CampaignRepository struct {
 	gorm *gorm.DB
 }
 
-func NewCampaignRepository() *CampaignRepository {
-	return &CampaignRepository{}
+func NewCampaignRepository(gorm *gorm.DB) *CampaignRepository {
+	return &CampaignRepository{gorm: gorm}
 }
 
 func (c *CampaignRepository) CreateCampaign(ctx context.Context, data request.CreateCampaignRequest) error {
@@ -53,11 +45,11 @@ func (c *CampaignRepository) GetCampaign(ctx context.Context, id int) (error, *m
 	return nil, &models.Campaign{}
 }
 
-func (c *CampaignRepository) UpdateCampaign(ctx context.Context, id int) error {
+func (c *CampaignRepository) UpdateCampaign(ctx context.Context, id int, data any) error {
 	log := logrus.WithContext(ctx)
 	log.Info("UpdateCampaign repository")
 
-	err := c.gorm.Model(&models.Campaign{}).Where("id = ?", id).Updates(&models.Campaign{})
+	err := c.gorm.Model(&models.Campaign{}).Where("id = ?", id).Updates(data)
 	if err.Error != nil {
 		log.Errorf("Error updating campaign: %v", err.Error)
 		return err.Error
