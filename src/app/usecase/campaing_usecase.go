@@ -57,11 +57,11 @@ func (c *CampaignUseCase) GetCampaign(ctx context.Context, id int) (*response.Ca
 	}, nil
 }
 
-func (c *CampaignUseCase) UpdateCampaign(ctx context.Context, id int) error {
+func (c *CampaignUseCase) UpdateCampaign(ctx context.Context, id int, data any) error {
 	log := logrus.WithContext(ctx)
 	log.Info("UpdateCampaign usecase")
 
-	err := c.campaingRepo.UpdateCampaign(ctx, id)
+	err := c.campaingRepo.UpdateCampaign(ctx, id, data)
 	if err != nil {
 		log.Errorf("Error updating campaign: %v", err)
 		return err
