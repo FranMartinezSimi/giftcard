@@ -2,7 +2,10 @@ package handler
 
 import (
 	"GiftWize/src/app/usecase"
+	"GiftWize/src/entity/request"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/sirupsen/logrus"
 )
 
 type CampaignHandler struct {
@@ -15,10 +18,26 @@ func NewCampaignHandler(useCase usecase.CampaignUseCase) *CampaignHandler {
 	}
 }
 
-// TODO Implementar los metodos de los handlers
+// TODO: Implementar los metodos de los handlers
 
 func (h *CampaignHandler) CreateCampaign(ctx *fiber.Ctx) error {
-	return nil
+	log := logrus.WithContext(ctx.Context())
+	log.Info("CreateCampaign usecase")
+
+	var body request.CreateCampaignRequest
+	if err := ctx.BodyParser(&body); err != nil {
+		log.Errorf("Error parsing request: %v", err)
+		return err
+	}
+
+	err := h.useCase.CreateCampaign(ctx.Context(), body)
+	if err != nil {
+		log.Errorf("Error creating campaign: %v", err)
+		return err
+	}
+
+	log.Info("Campaign created successfully")
+	return ctx.SendStatus(fiber.StatusCreated)
 }
 
 func (h *CampaignHandler) GetCampaign(ctx *fiber.Ctx) error {
