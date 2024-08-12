@@ -2,22 +2,17 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type GiftCard struct {
-	gorm.Model
-	ID             uint `gorm:"primaryKey"`
-	Type           string
-	Balance        float64
-	ExpirationDate time.Time
-	Status         string
-	IsPromotional  bool `gorm:"default:false"`
-	CampaignID     uint
+	ID             uint      `gorm:"primaryKey;autoIncrement"`
+	Type           string    `gorm:"size:50"`
+	Balance        float64   `gorm:"type:decimal(10,2)"`
+	ExpirationDate time.Time `gorm:"type:date"`
+	Status         string    `gorm:"size:50"`
+	IsPromotional  bool      `gorm:"default:false"`
+	CampaignID     uint      `gorm:"index"`
+	Campaign       Campaign  `gorm:"foreignKey:CampaignID"`
 	CreatedAt      time.Time `gorm:"autoCreateTime"`
 	UpdatedAt      time.Time `gorm:"autoUpdateTime"`
-	Campaign       Campaign
-	Transactions   []Transaction
-	Inventory      []Inventory
 }

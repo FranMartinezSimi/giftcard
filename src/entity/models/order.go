@@ -2,19 +2,15 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type Order struct {
-	gorm.Model
-	ID            uint `gorm:"primaryKey"`
-	CustomerID    uint
-	OrderDate     time.Time
-	TotalAmount   float64
-	Status        string
-	Customer      Customer
-	CreatedAt     time.Time `gorm:"autoCreateTime"`
-	UpdatedAt     time.Time `gorm:"autoUpdateTime"`
-	CompanyOrders []CompanyOrder
+	ID          uint      `gorm:"primaryKey;autoIncrement"`
+	CustomerID  uint      `gorm:"index"`
+	Customer    Customer  `gorm:"foreignKey:CustomerID"`
+	OrderDate   time.Time `gorm:"autoCreateTime"`
+	TotalAmount float64   `gorm:"type:decimal(10,2)"`
+	Status      string    `gorm:"size:50"`
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
+	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
 }

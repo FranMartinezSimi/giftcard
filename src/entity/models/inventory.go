@@ -2,20 +2,16 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type Inventory struct {
-	gorm.Model
-	ID           uint `gorm:"primaryKey"`
-	GiftCards    []GiftCard
-	LocationType string
-	BinLocation  string
+	ID           uint     `gorm:"primaryKey;autoIncrement"`
+	GiftCardID   uint     `gorm:"index"`
+	GiftCard     GiftCard `gorm:"foreignKey:GiftCardID"`
+	LocationType string   `gorm:"size:50"`
+	BinLocation  string   `gorm:"size:50"`
 	Quantity     int
-	Status       string
-	CampaignID   uint `gorm:"foreignKey:Campaign.ID"`
-	Campaign     Campaign
+	Status       string    `gorm:"size:50"`
 	CreatedAt    time.Time `gorm:"autoCreateTime"`
 	UpdatedAt    time.Time `gorm:"autoUpdateTime"`
 }

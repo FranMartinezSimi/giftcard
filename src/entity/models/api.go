@@ -2,16 +2,13 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type API struct {
-	gorm.Model
-	ID          uint `gorm:"primaryKey"`
-	Name        string
-	Description string
-	Endpoint    string
+	ID          uint      `gorm:"primaryKey;autoIncrement"`
+	Name        string    `gorm:"size:255"`
+	Description string    `gorm:"type:text"`
+	Endpoint    string    `gorm:"size:255"`
 	CreatedAt   time.Time `gorm:"autoCreateTime"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
 }

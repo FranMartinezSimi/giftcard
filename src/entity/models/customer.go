@@ -2,18 +2,14 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type Customer struct {
-	gorm.Model
-	ID        uint `gorm:"primaryKey"`
-	Name      string
-	Email     string
-	Phone     string
-	Address   string
+	ID        uint      `gorm:"primaryKey;autoIncrement"`
+	Name      string    `gorm:"size:255"`
+	Email     string    `gorm:"size:255"`
+	Phone     string    `gorm:"size:20"`
+	Address   string    `gorm:"type:text"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
-	Orders    []Order
 }

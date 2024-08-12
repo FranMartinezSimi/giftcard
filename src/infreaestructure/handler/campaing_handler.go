@@ -41,7 +41,27 @@ func (h *CampaignHandler) CreateCampaign(ctx *fiber.Ctx) error {
 }
 
 func (h *CampaignHandler) GetCampaign(ctx *fiber.Ctx) error {
-	return nil
+	log := logrus.WithContext(ctx.Context())
+	log.Info("GetCampaign handler")
+
+	id, err := ctx.ParamsInt("id")
+	if err != nil {
+		log.Errorf("Error parsing id: %v", err)
+		return err
+	}
+
+	campaign, err := h.useCase.GetCampaign(ctx.Context(), id)
+	if err != nil {
+		log.Errorf("Error getting campaign: %v", err)
+		return err
+	}
+
+	if campaign == nil {
+		log.Error("Campaign not found")
+		return ctx.SendStatus(fiber.StatusNotFound)
+	}
+
+	return ctx.JSON(campaign)
 }
 
 func (h *CampaignHandler) UpdateCampaign(ctx *fiber.Ctx) error {

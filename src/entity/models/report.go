@@ -2,16 +2,13 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type Report struct {
-	gorm.Model
-	ID        uint `gorm:"primaryKey"`
-	Name      string
-	Filters   string
-	CreatedAt time.Time      `gorm:"autoCreateTime"`
-	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	ID          uint      `gorm:"primaryKey;autoIncrement"`
+	Name        string    `gorm:"size:255"`
+	Filters     string    `gorm:"type:text"`
+	GeneratedAt time.Time `gorm:"autoCreateTime"`
+	CreatedAt   time.Time `gorm:"autoCreateTime"`
+	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
 }
