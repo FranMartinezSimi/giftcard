@@ -1,1 +1,4 @@
 package module
+
+func GiftCardModule() {
+}

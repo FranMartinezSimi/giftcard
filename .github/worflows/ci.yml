@@ -1,19 +1,14 @@
 name: CI WORKFLOW DEV
-on: [push]
+on: [push , pull_request]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      PORT: 8080
-      DB_USER: root
-      DB_PASS: giftcard
-      DB_NAME: giftcard
-      DB_PORT: 5432
-      
-
     steps:
+      - name: install go
+        uses: apt install golang@1.22
+
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -27,3 +22,6 @@ jobs:
 
       - name: Run tests
         run: go test ./...
+
+      - name: Build
+        run: go build -o giftcard

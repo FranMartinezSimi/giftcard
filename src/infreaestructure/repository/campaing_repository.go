@@ -3,9 +3,11 @@ package repository
 import (
 	"GiftWize/src/entity/models"
 	"GiftWize/src/entity/request"
+	"GiftWize/src/entity/response"
 	"context"
-
-	"github.com/sirupsen/logrus"
+	"errors"
+	"fmt"
+	"github.com/gofiber/fiber/v2/log"
 	"gorm.io/gorm"
 )
 
@@ -17,90 +19,151 @@ func NewCampaignRepository(gorm *gorm.DB) *CampaignRepository {
 	return &CampaignRepository{gorm: gorm}
 }
 
-func (c *CampaignRepository) CreateCampaign(ctx context.Context, data request.CreateCampaignRequest) error {
-	log := logrus.WithContext(ctx)
-	log.Info("CreateCampaign repository")
+func (c *CampaignRepository) CreateCampaign(ctx context.Context, data request.CreateCampaignRequest, uuid string) error {
+	log.WithContext(ctx).Info("CreateCampaign repository")
 
-	err := c.gorm.Create(&models.Campaign{})
-	if err.Error != nil {
-		log.Errorf("Error creating campaign: %v", err.Error)
-		return err.Error
+	res := c.gorm.WithContext(ctx).Create(&models.Campaign{
+		CampaignUUID:       uuid,
+		Name:               data.Name,
+		Description:        data.Description,
+		StartDate:          data.StartDate,
+		EndDate:            data.EndDate,
+		DiscountPercentage: data.DiscountPercentage,
+	})
+
+	if res.Error != nil {
+		log.WithContext(ctx).Errorf("Error creating campaign: %v", res.Error)
+		return res.Error
 	}
-	log.Info("Campaign created successfully")
+
+	log.WithContext(ctx).Info("Campaign created successfully")
 	return nil
 }
 
-func (c *CampaignRepository) GetCampaign(ctx context.Context, id int) (error, *models.Campaign) {
-	log := logrus.WithContext(ctx)
-	log.Info("GetCampaign repository")
+func (c *CampaignRepository) GetCampaign(ctx context.Context, id int) (*models.Campaign, error) {
+	log.WithContext(ctx).Info("GetCampaign repository")
 
-	data := c.gorm.Find(&models.Campaign{}, id).First(&models.Campaign{}, id)
+	var campaign models.Campaign
+	res := c.gorm.WithContext(ctx).First(&campaign, id)
 
-	if data.Error != nil {
-		log.Errorf("Error getting campaign: %v", data.Error)
-		return data.Error, nil
+	if res.Error != nil {
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			log.WithContext(ctx).Errorf("Campaign not found: %v", res.Error)
+			return nil, nil
+		}
+		log.WithContext(ctx).Errorf("Error getting campaign: %v", res.Error)
+		return nil, res.Error
 	}
 
-	log.Info("Campaign retrieved successfully")
-	return nil, &models.Campaign{}
+	log.WithContext(ctx).Info("Campaign retrieved successfully")
+	return &campaign, nil
 }
 
-func (c *CampaignRepository) UpdateCampaign(ctx context.Context, id int, data any) error {
-	log := logrus.WithContext(ctx)
-	log.Info("UpdateCampaign repository")
+func (c *CampaignRepository) UpdateCampaign(ctx context.Context, id int, data *request.UpdateCampaignRequest) error {
+	log.WithContext(ctx).Info("UpdateCampaign repository")
 
-	err := c.gorm.Model(&models.Campaign{}).Where("id = ?", id).Updates(data)
-	if err.Error != nil {
-		log.Errorf("Error updating campaign: %v", err.Error)
-		return err.Error
+	updateData := map[string]interface{}{
+		"name":                data.Name,
+		"description":         data.Description,
+		"start_date":          data.StartDate,
+		"end_date":            data.EndDate,
+		"is_enabled":          data.IsEnabled,
+		"discount_percentage": data.DiscountPercentage,
 	}
-	log.Info("Campaign updated successfully")
+
+	res := c.gorm.WithContext(ctx).Model(&models.Campaign{}).Where("id = ?", id).Updates(updateData)
+	if res.Error != nil {
+		log.WithContext(ctx).Errorf("Error updating campaign: %v", res.Error)
+		return res.Error
+	}
+
+	if res.RowsAffected == 0 {
+		log.WithContext(ctx).Error("Cannot update campaign")
+		return nil
+	}
+
+	log.WithContext(ctx).Info("Campaign updated successfully")
 	return nil
 }
 
-func (c *CampaignRepository) SearchFullCampaign(ctx context.Context, data interface{}) error {
-	log := logrus.WithContext(ctx)
-	log.Info("SearchFullCampaign repository")
+func (c *CampaignRepository) FullTextSearchCampaign(ctx context.Context, data *request.FullTextSearchCampaignRequest) (*response.CampaignResponse, error) {
+	log.WithContext(ctx).Info("FullTextSearchCampaign repository")
 
-	err := c.gorm.Find(&models.Campaign{}).Where("id = ? OR name = ? OR description = ? OR start_date = ? OR end_date = ? OR discount_percentage = ?", data)
-	if err.Error != nil {
-		log.Errorf("Error searching full campaign: %v", err.Error)
-		return err.Error
+	var campaign models.Campaign
+	res := c.gorm.WithContext(ctx).Where("id = ? OR name = ? OR description = ? OR start_date = ? OR end_date = ?",
+		data.ID, data.Name, data.Description, data.StartDate, data.EndDate).First(&campaign)
+
+	if res.Error != nil {
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			log.WithContext(ctx).Error("Campaign not found")
+			return nil, nil
+		}
+		log.WithContext(ctx).Errorf("Error searching campaign: %v", res.Error)
+		return nil, res.Error
 	}
-	log.Info("Full campaign retrieved successfully")
-	return nil
 
+	campaignResponse := &response.CampaignResponse{
+		ID:                 campaign.ID,
+		Name:               campaign.Name,
+		Description:        campaign.Description,
+		StartDate:          campaign.StartDate.Format("2006-01-02"),
+		EndDate:            campaign.EndDate.Format("2006-01-02"),
+		DiscountPercentage: fmt.Sprintf("%.2f", campaign.DiscountPercentage),
+	}
+
+	log.WithContext(ctx).Info("Campaign retrieved successfully")
+	return campaignResponse, nil
 }
 
 func (c *CampaignRepository) DeleteCampaign(ctx context.Context, id int) error {
-	log := logrus.WithContext(ctx)
-	log.Info("DeleteCampaign repository")
+	log.WithContext(ctx).Info("DeleteCampaign repository")
 
-	err := c.gorm.Delete(&models.Campaign{}, id)
-	if err.Error != nil {
-		log.Errorf("Error deleting campaign: %v", err.Error)
-		return err.Error
+	res := c.gorm.WithContext(ctx).Delete(&models.Campaign{}, id)
+	if res.Error != nil {
+		log.WithContext(ctx).Errorf("Error deleting campaign: %v", res.Error)
+		return res.Error
 	}
-	log.Info("Campaign deleted successfully")
+
+	log.WithContext(ctx).Info("Campaign deleted successfully")
 	return nil
 }
 
 func (c *CampaignRepository) SearchCampaign(ctx context.Context, query string) ([]*models.Campaign, error) {
-	log := logrus.WithContext(ctx)
-	log.Info("SearchCampaign repository")
+	log.WithContext(ctx).Info("SearchCampaign repository")
 
 	var campaigns []*models.Campaign
+	res := c.gorm.WithContext(ctx).Where("MATCH(name, description, start_date, end_date, discount_percentage) AGAINST (?)", query).Find(&campaigns)
 
-	if err := c.gorm.Where("MATCH(name, description, start_date, end_date, discount_percentage) AGAINST (?)", query).Find(&campaigns).Error; err != nil {
-		log.Errorf("Error searching campaign: %v", err)
-		return nil, err
+	if res.Error != nil {
+		log.WithContext(ctx).Errorf("Error searching campaign: %v", res.Error)
+		return nil, res.Error
 	}
 
 	if len(campaigns) == 0 {
-		log.Error("Campaign not found")
+		log.WithContext(ctx).Info("No campaigns found")
 		return nil, nil
 	}
 
-	log.Info("Campaign retrieved successfully")
+	log.WithContext(ctx).Info("Campaigns retrieved successfully")
+	return campaigns, nil
+}
+
+func (c *CampaignRepository) ListCampaigns(ctx context.Context) ([]*models.Campaign, error) {
+	log.WithContext(ctx).Info("ListCampaigns repository")
+
+	var campaigns []*models.Campaign
+	res := c.gorm.WithContext(ctx).Find(&campaigns)
+
+	if res.Error != nil {
+		log.WithContext(ctx).Errorf("Error listing campaigns: %v", res.Error)
+		return nil, res.Error
+	}
+
+	if len(campaigns) == 0 {
+		log.WithContext(ctx).Info("No campaigns found")
+		return nil, nil
+	}
+
+	log.WithContext(ctx).Info("Campaigns retrieved successfully")
 	return campaigns, nil
 }

@@ -6,29 +6,38 @@ import (
 	"GiftWize/src/infreaestructure/repository"
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 
 	"github.com/sirupsen/logrus"
 )
 
 type CampaignUseCase struct {
-	campaingRepo repository.CampaignRepository
+	campaignRepo repository.CampaignRepository
 }
 
-func NewCampaignUseCase(campaingRepo repository.CampaignRepository) *CampaignUseCase {
+func NewCampaignUseCase(campaignRepo repository.CampaignRepository) *CampaignUseCase {
 	return &CampaignUseCase{
-		campaingRepo: campaingRepo,
+		campaignRepo: campaignRepo,
 	}
 }
 
 func (c *CampaignUseCase) CreateCampaign(ctx context.Context, data request.CreateCampaignRequest) error {
 	log := logrus.WithContext(ctx)
-	log.Info("CreateCampaign usecase")
+	log.Info("CreateCampaign use case")
 
-	err := c.campaingRepo.CreateCampaign(ctx, data)
+	UUID, err := uuid.NewUUID()
+	if err != nil {
+		log.Errorf("Error generating UUID: %v", err)
+		return err
+	}
+	campaignUUID := fmt.Sprintf("CAMP-%d", UUID)
+
+	err = c.campaignRepo.CreateCampaign(ctx, data, campaignUUID)
 	if err != nil {
 		log.Errorf("Error creating campaign: %v", err)
 		return err
 	}
+
 	log.Info("Campaign created successfully")
 	return nil
 }
@@ -37,7 +46,7 @@ func (c *CampaignUseCase) GetCampaign(ctx context.Context, id int) (*response.Ca
 	log := logrus.WithContext(ctx)
 	log.Info("GetCampaign usecase")
 
-	err, campaign := c.campaingRepo.GetCampaign(ctx, id)
+	campaign, err := c.campaignRepo.GetCampaign(ctx, id)
 	if err != nil {
 		log.Errorf("Error getting campaign: %v", err)
 		return nil, err
@@ -49,6 +58,7 @@ func (c *CampaignUseCase) GetCampaign(ctx context.Context, id int) (*response.Ca
 
 	return &response.CampaignResponse{
 		ID:                 campaign.ID,
+		Uuid:               campaign.CampaignUUID,
 		Name:               campaign.Name,
 		Description:        campaign.Description,
 		StartDate:          campaign.StartDate.Format("2006-01-02"), // Formato de fecha
@@ -57,15 +67,27 @@ func (c *CampaignUseCase) GetCampaign(ctx context.Context, id int) (*response.Ca
 	}, nil
 }
 
-func (c *CampaignUseCase) UpdateCampaign(ctx context.Context, id int, data any) error {
+func (c *CampaignUseCase) UpdateCampaign(ctx context.Context, id int, data *request.UpdateCampaignRequest) error {
 	log := logrus.WithContext(ctx)
 	log.Info("UpdateCampaign usecase")
 
-	err := c.campaingRepo.UpdateCampaign(ctx, id, data)
+	campaignFound, err := c.campaignRepo.GetCampaign(ctx, id)
+
+	if err != nil {
+		log.Errorf("Errror finding campaign: %v", err)
+		return err
+	}
+	if campaignFound == nil {
+		log.Error("Campaign not found")
+		return nil
+	}
+
+	err = c.campaignRepo.UpdateCampaign(ctx, id, data)
 	if err != nil {
 		log.Errorf("Error updating campaign: %v", err)
 		return err
 	}
+
 	log.Info("Campaign updated successfully")
 	return nil
 }
@@ -74,9 +96,9 @@ func (c *CampaignUseCase) SearchCampaign(ctx context.Context, param string) ([]r
 	log := logrus.WithContext(ctx)
 	log.Info("SearchCampaign usecase")
 
-	campaigns, err := c.campaingRepo.SearchCampaign(ctx, param)
+	campaigns, err := c.campaignRepo.SearchCampaign(ctx, param)
 	if err != nil {
-		log.Errorf("Error searching campaign: %v", err)
+		log.Errorf("Error searching campaigns: %v", err)
 		return nil, err
 	}
 
@@ -88,10 +110,62 @@ func (c *CampaignUseCase) SearchCampaign(ctx context.Context, param string) ([]r
 			Description:        campaign.Description,
 			StartDate:          campaign.StartDate.Format("2006-01-02"), // Formato de fecha
 			EndDate:            campaign.EndDate.Format("2006-01-02"),   // Formato de fecha
+			IsEnabled:          campaign.IsEnabled,
 			DiscountPercentage: fmt.Sprintf("%.2f%%", campaign.DiscountPercentage),
 		})
 	}
 
-	log.Info("Campaign retrieved successfully")
+	log.Info("Campaigns retrieved successfully")
+	return campaignResponses, nil
+}
+
+func (c *CampaignUseCase) DeleteCampaign(ctx context.Context, id int) error {
+	log := logrus.WithContext(ctx)
+	log.Info("DeleteCampaign usecase")
+
+	campaignFound, err := c.campaignRepo.GetCampaign(ctx, id)
+	if err != nil {
+		log.Errorf("Error finding campaign: %v", err)
+		return err
+	}
+	if campaignFound == nil {
+		log.Error("Campaign not found")
+		return nil
+	}
+
+	err = c.campaignRepo.DeleteCampaign(ctx, id)
+	if err != nil {
+		log.Errorf("Error deleting campaign: %v", err)
+		return err
+	}
+
+	log.Info("Campaign deleted successfully")
+	return nil
+}
+
+func (c *CampaignUseCase) ListCampaigns(ctx context.Context) ([]response.CampaignResponse, error) {
+	log := logrus.WithContext(ctx)
+	log.Info("ListCampaigns usecase")
+
+	campaigns, err := c.campaignRepo.ListCampaigns(ctx)
+	if err != nil {
+		log.Errorf("Error listing campaigns: %v", err)
+		return nil, err
+	}
+
+	var campaignResponses []response.CampaignResponse
+	for _, campaign := range campaigns {
+		campaignResponses = append(campaignResponses, response.CampaignResponse{
+			ID:                 campaign.ID,
+			Name:               campaign.Name,
+			Description:        campaign.Description,
+			StartDate:          campaign.StartDate.Format("2006-01-02"), // Formato de fecha
+			EndDate:            campaign.EndDate.Format("2006-01-02"),   // Formato de fecha
+			IsEnabled:          campaign.IsEnabled,
+			DiscountPercentage: fmt.Sprintf("%.2f%%", campaign.DiscountPercentage),
+		})
+	}
+
+	log.Info("Campaigns retrieved successfully")
 	return campaignResponses, nil
 }
