@@ -109,6 +109,8 @@ func (c *CampaignRepository) FullTextSearchCampaign(ctx context.Context, data *r
 		StartDate:          campaign.StartDate.Format("2006-01-02"),
 		EndDate:            campaign.EndDate.Format("2006-01-02"),
 		DiscountPercentage: fmt.Sprintf("%.2f", campaign.DiscountPercentage),
+		IsEnabled:          campaign.IsEnabled,
+		CreatedAt:          campaign.CreatedAt.Format("2006-01-02 15:04:05"),
 	}
 
 	log.WithContext(ctx).Info("Campaign retrieved successfully")

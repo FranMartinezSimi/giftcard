@@ -18,8 +18,6 @@ func NewCampaignHandler(useCase usecase.CampaignUseCase) *CampaignHandler {
 	}
 }
 
-// TODO: Implementar los metodos de los handlers
-
 func (h *CampaignHandler) CreateCampaign(ctx *fiber.Ctx) error {
 	log := logrus.WithContext(ctx.Context())
 	log.Info("CreateCampaign usecase")
