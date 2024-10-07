@@ -18,7 +18,21 @@ func NewGiftCardRepository(gorm *gorm.DB) *GiftCardRepository {
 	return &GiftCardRepository{gorm: gorm}
 }
 
-func (c *GiftCardRepository) CreateGiftCard(ctx context.Context, data request.CreateGiftCardRequest, uuid string) error {
+func (c *GiftCardRepository) GiftCardNumberExists(ctx context.Context, giftCardNumber string) (bool, error) {
+	log.WithContext(ctx).Info("GiftCardNumberExists repository")
+
+	var count int64
+	res := c.gorm.WithContext(ctx).Model(&models.GiftCard{}).Where("gift_card_number = ?", giftCardNumber).Count(&count)
+	if res.Error != nil {
+		log.WithContext(ctx).Errorf("Error checking gift card number existence: %v", res.Error)
+		return false, res.Error
+	}
+
+	log.WithContext(ctx).Info("Gift card number existence checked successfully")
+	return count > 0, nil
+}
+
+func (c *GiftCardRepository) CreateGiftCard(ctx context.Context, data request.CreateGiftCardRequest, uuid string, giftCardNumber string) error {
 	log.WithContext(ctx).Info("CreateGiftCard repository")
 
 	expirationDate, expirationErr := time.Parse("2006-01-02", data.ExpirationDate)
@@ -29,6 +43,7 @@ func (c *GiftCardRepository) CreateGiftCard(ctx context.Context, data request.Cr
 
 	res := c.gorm.WithContext(ctx).Create(&models.GiftCard{
 		Type:           data.Type,
+		GiftCardNumber: giftCardNumber,
 		Balance:        data.Balance,
 		ExpirationDate: expirationDate,
 		Status:         data.Status,

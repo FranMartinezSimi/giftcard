@@ -6,6 +6,7 @@ import (
 
 type GiftCard struct {
 	ID             uint      `gorm:"primaryKey;autoIncrement"`
+	GiftCardNumber string    `gorm:"size:50;unique"`
 	Type           string    `gorm:"size:50"`
 	Balance        float64   `gorm:"type:decimal(10,2)"`
 	ExpirationDate time.Time `gorm:"type:date"`
