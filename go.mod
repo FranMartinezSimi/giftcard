@@ -2,11 +2,7 @@ module GiftWize
 
 go 1.22.4
 
-require (
-	github.com/gofiber/fiber/v3 v3.0.0-beta.3 // indirect
-	github.com/gofiber/utils/v2 v2.0.0-beta.6 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
-)
+require github.com/stretchr/testify v1.9.0 // indirect
 
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
