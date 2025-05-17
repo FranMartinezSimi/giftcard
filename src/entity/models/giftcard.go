@@ -18,4 +18,11 @@ type GiftCard struct {
 	InventoryID    uint      `gorm:"index"`
 	CreatedAt      time.Time `gorm:"autoCreateTime"`
 	UpdatedAt      time.Time `gorm:"autoUpdateTime"`
+	Code           string    `gorm:"size:50;unique;not null"`
+	InitialBalance float64   `gorm:"type:decimal(10,2)"`
+	ActivationDate time.Time `gorm:"type:timestamp"`
+	LastUsedDate   time.Time `gorm:"type:timestamp"`
+	PinCode        string    `gorm:"size:6"`
+	MaxUses        int       `gorm:"type:int"`
+	CurrentUses    int       `gorm:"type:int;default:0"`
 }
