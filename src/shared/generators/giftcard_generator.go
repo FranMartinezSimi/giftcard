@@ -1,6 +1,9 @@
 package generators
 
-import "math/rand"
+import (
+	"math/rand"
+	"strconv" // Import strconv
+)
 
 func GenerateGiftcardNumber(length int, prefix string) string {
 	baseLength := length - len(prefix) - 1 // -1 para el dígito de verificación
@@ -13,7 +16,7 @@ func GenerateGiftcardNumber(length int, prefix string) string {
 	number := prefix + string(base)
 	checkDigit := GenerateCheckDigit(number)
 
-	return number + string('0'+checkDigit)
+	return number + strconv.Itoa(checkDigit)
 }
 
 func GenerateCheckDigit(number string) int {

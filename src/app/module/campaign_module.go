@@ -11,9 +11,9 @@ import (
 
 func CampaignModule(app *fiber.App) {
 	db := shared.Init()
-	campaignRepo := repository.NewCampaignRepository(db)
-	campaignUseCase := usecase.NewCampaignUseCase(*campaignRepo)
-	handler := handler2.NewCampaignHandler(*campaignUseCase)
+	campaignRepo := repository.NewCampaignRepository(db) // Returns ICampaignRepository
+	campaignUseCase := usecase.NewCampaignUseCase(campaignRepo) // Pass interface directly
+	handler := handler2.NewCampaignHandler(campaignUseCase) // Pass interface directly
 
 	app.Post("/campaign", handler.CreateCampaign)
 	app.Get("/campaign/:id", handler.GetCampaign)

@@ -1,26 +1,43 @@
 package usecase
 
 import (
+	"GiftWize/src/app"
 	"GiftWize/src/entity/request"
 	"GiftWize/src/entity/response"
-	"GiftWize/src/infreaestructure/repository"
+	"GiftWize/src/infreaestructure/repository" // Will use repository.ICampaignRepository
 	"context"
+	"errors" // Added for errors.Is
 	"fmt"
 
 	"github.com/google/uuid"
-
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm" // Added for gorm.ErrRecordNotFound
 )
 
-type CampaignUseCase struct {
-	campaignRepo repository.CampaignRepository
+// ICampaignUseCase defines the interface for campaign use case operations.
+type ICampaignUseCase interface {
+	CreateCampaign(ctx context.Context, data request.CreateCampaignRequest) error
+	GetCampaign(ctx context.Context, id int) (*response.CampaignResponse, error)
+	UpdateCampaign(ctx context.Context, id int, data *request.UpdateCampaignRequest) error
+	DeleteCampaign(ctx context.Context, id int) error
+	SearchCampaign(ctx context.Context, param string) ([]response.CampaignResponse, error)
+	ListCampaigns(ctx context.Context) ([]response.CampaignResponse, error)
 }
 
-func NewCampaignUseCase(campaignRepo repository.CampaignRepository) *CampaignUseCase {
+type CampaignUseCase struct {
+	campaignRepo repository.ICampaignRepository // Depends on the interface
+}
+
+// NewCampaignUseCase creates a new CampaignUseCase instance.
+// It now returns ICampaignUseCase to allow for interface-based dependency injection.
+func NewCampaignUseCase(campaignRepo repository.ICampaignRepository) ICampaignUseCase { // Accepts and returns the interface
 	return &CampaignUseCase{
 		campaignRepo: campaignRepo,
 	}
 }
+
+// Ensure CampaignUseCase implements ICampaignUseCase
+var _ ICampaignUseCase = (*CampaignUseCase)(nil)
 
 func (c *CampaignUseCase) CreateCampaign(ctx context.Context, data request.CreateCampaignRequest) error {
 	log := logrus.WithContext(ctx)
@@ -75,12 +92,18 @@ func (c *CampaignUseCase) UpdateCampaign(ctx context.Context, id int, data *requ
 	campaignFound, err := c.campaignRepo.GetCampaign(ctx, id)
 
 	if err != nil {
-		log.Errorf("Errror finding campaign: %v", err)
-		return err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Warnf("Campaign not found with id %d for update: %v", id, err)
+			return app.ErrCampaignNotFound
+		}
+		log.Errorf("Error finding campaign with id %d for update: %v", id, err)
+		return err // Propagate other errors
 	}
-	if campaignFound == nil {
-		log.Error("Campaign not found")
-		return nil
+	// This check might be redundant if gorm.ErrRecordNotFound is the standard way "not found" is signaled with an error.
+	// However, if GetCampaign can return (nil, nil) for "not found" without an error, this remains relevant.
+	if campaignFound == nil { 
+		log.Warnf("Campaign not found with id %d for update (repository returned nil campaign and nil error)", id)
+		return app.ErrCampaignNotFound
 	}
 
 	err = c.campaignRepo.UpdateCampaign(ctx, id, data)
@@ -126,12 +149,17 @@ func (c *CampaignUseCase) DeleteCampaign(ctx context.Context, id int) error {
 
 	campaignFound, err := c.campaignRepo.GetCampaign(ctx, id)
 	if err != nil {
-		log.Errorf("Error finding campaign: %v", err)
-		return err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Warnf("Campaign not found with id %d for delete: %v", id, err)
+			return app.ErrCampaignNotFound
+		}
+		log.Errorf("Error finding campaign with id %d for delete: %v", id, err)
+		return err // Propagate other errors
 	}
+	// Similar to UpdateCampaign, this check handles the (nil, nil) case from the repository.
 	if campaignFound == nil {
-		log.Error("Campaign not found")
-		return nil
+		log.Warnf("Campaign not found with id %d for delete (repository returned nil campaign and nil error)", id)
+		return app.ErrCampaignNotFound
 	}
 
 	err = c.campaignRepo.DeleteCampaign(ctx, id)

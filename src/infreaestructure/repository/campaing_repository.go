@@ -12,13 +12,29 @@ import (
 	"gorm.io/gorm"
 )
 
+// ICampaignRepository defines the interface for campaign repository operations.
+type ICampaignRepository interface {
+	CreateCampaign(ctx context.Context, data request.CreateCampaignRequest, uuid string) error
+	GetCampaign(ctx context.Context, id int) (*models.Campaign, error)
+	UpdateCampaign(ctx context.Context, id int, data *request.UpdateCampaignRequest) error
+	DeleteCampaign(ctx context.Context, id int) error
+	FullTextSearchCampaign(ctx context.Context, data *request.FullTextSearchCampaignRequest) (*response.CampaignResponse, error)
+	SearchCampaign(ctx context.Context, query string) ([]*models.Campaign, error)
+	ListCampaigns(ctx context.Context) ([]*models.Campaign, error)
+}
+
 type CampaignRepository struct {
 	gorm *gorm.DB
 }
 
-func NewCampaignRepository(gorm *gorm.DB) *CampaignRepository {
+// NewCampaignRepository creates a new instance of CampaignRepository.
+// It now returns ICampaignRepository to allow for interface-based dependency injection.
+func NewCampaignRepository(gorm *gorm.DB) ICampaignRepository {
 	return &CampaignRepository{gorm: gorm}
 }
+
+// Ensure CampaignRepository implements ICampaignRepository
+var _ ICampaignRepository = (*CampaignRepository)(nil)
 
 func (c *CampaignRepository) CreateCampaign(ctx context.Context, data request.CreateCampaignRequest, uuid string) error {
 	log.WithContext(ctx).Info("CreateCampaign repository")

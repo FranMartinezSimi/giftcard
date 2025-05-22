@@ -13,5 +13,6 @@ type GetAllGiftCardResponse struct {
 type UseGiftCardAmountResponse struct {
 	GiftCardNumber string  `json:"gift_card_number"`
 	Balance        float64 `json:"balance"`
-	IsUsed         bool    `json:"is_used"`
+	IsUsed         bool    `json:"is_used"` // Indicates if the amount was successfully used
+	Message        string  `json:"message,omitempty"` // Optional message, e.g., for errors or status
 }

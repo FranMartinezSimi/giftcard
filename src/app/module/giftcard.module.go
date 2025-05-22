@@ -11,9 +11,9 @@ import (
 
 func GiftCardModule(app *fiber.App) {
 	db := shared.Init()
-	giftCardRepo := repository.NewGiftCardRepository(db)
-	giftCardUseCase := usecase.NewGiftCardUseCase(*giftCardRepo)
-	handler := handler2.NewGiftCardHandler(*giftCardUseCase)
+	giftCardRepo := repository.NewGiftCardRepository(db)    // Returns IGiftCardRepository
+	giftCardUseCase := usecase.NewGiftCardUseCase(giftCardRepo) // Expects IGiftCardRepository, returns IGiftCardUseCase
+	handler := handler2.NewGiftCardHandler(giftCardUseCase)  // Expects IGiftCardUseCase
 
 	app.Post("/giftcard", handler.CreateGiftCard)
 	app.Get("/giftcard/:id", handler.GetGiftCardByID)
