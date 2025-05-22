@@ -3,16 +3,17 @@ package handler
 import (
 	"GiftWize/src/app/usecase"
 	"GiftWize/src/entity/request"
+	"GiftWize/src/shared"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 )
 
 type GiftCardHandler struct {
-	giftCardUseCase usecase.GiftCardUseCase
+	giftCardUseCase usecase.IGiftCardUseCase // Depends on the interface
 }
 
-func NewGiftCardHandler(giftCardUseCase usecase.GiftCardUseCase) *GiftCardHandler {
+func NewGiftCardHandler(giftCardUseCase usecase.IGiftCardUseCase) *GiftCardHandler { // Accepts the interface
 	return &GiftCardHandler{
 		giftCardUseCase: giftCardUseCase,
 	}
@@ -25,7 +26,13 @@ func (g *GiftCardHandler) CreateGiftCard(ctx *fiber.Ctx) error {
 	var body request.CreateGiftCardRequest
 	if err := ctx.BodyParser(&body); err != nil {
 		log.Errorf("Error parsing request: %v", err)
-		return ctx.SendStatus(fiber.StatusBadRequest)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot parse JSON"})
+	}
+
+	// Validate the request body
+	if validationErrors := shared.ValidateStruct(body); len(validationErrors) > 0 {
+		log.Error("Validation errors:", validationErrors)
+		return ctx.Status(fiber.StatusBadRequest).JSON(shared.FormatValidationErrors(validationErrors))
 	}
 
 	err := g.giftCardUseCase.CreateGiftCard(ctx.Context(), body)
@@ -71,7 +78,13 @@ func (g *GiftCardHandler) UpdateGiftCard(ctx *fiber.Ctx) error {
 	var body request.UpdateGiftCardRequest
 	if err := ctx.BodyParser(&body); err != nil {
 		log.Errorf("Error parsing request: %v", err)
-		return ctx.SendStatus(fiber.StatusBadRequest)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot parse JSON"})
+	}
+
+	// Validate the request body
+	if validationErrors := shared.ValidateStruct(body); len(validationErrors) > 0 {
+		log.Error("Validation errors:", validationErrors)
+		return ctx.Status(fiber.StatusBadRequest).JSON(shared.FormatValidationErrors(validationErrors))
 	}
 
 	err := g.giftCardUseCase.UpdateGiftCard(ctx.Context(), id, body)

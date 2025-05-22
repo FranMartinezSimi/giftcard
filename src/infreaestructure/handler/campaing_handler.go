@@ -3,16 +3,17 @@ package handler
 import (
 	"GiftWize/src/app/usecase"
 	"GiftWize/src/entity/request"
+	"GiftWize/src/shared"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 )
 
 type CampaignHandler struct {
-	useCase usecase.CampaignUseCase
+	useCase usecase.ICampaignUseCase // Depends on the interface
 }
 
-func NewCampaignHandler(useCase usecase.CampaignUseCase) *CampaignHandler {
+func NewCampaignHandler(useCase usecase.ICampaignUseCase) *CampaignHandler { // Accepts the interface
 	return &CampaignHandler{
 		useCase: useCase,
 	}
@@ -25,7 +26,13 @@ func (h *CampaignHandler) CreateCampaign(ctx *fiber.Ctx) error {
 	var body request.CreateCampaignRequest
 	if err := ctx.BodyParser(&body); err != nil {
 		log.Errorf("Error parsing request: %v", err)
-		return ctx.SendStatus(fiber.StatusBadRequest)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot parse JSON"})
+	}
+
+	// Validate the request body
+	if validationErrors := shared.ValidateStruct(body); len(validationErrors) > 0 {
+		log.Error("Validation errors:", validationErrors)
+		return ctx.Status(fiber.StatusBadRequest).JSON(shared.FormatValidationErrors(validationErrors))
 	}
 
 	err := h.useCase.CreateCampaign(ctx.Context(), body)
@@ -75,7 +82,13 @@ func (h *CampaignHandler) UpdateCampaign(ctx *fiber.Ctx) error {
 	var body request.UpdateCampaignRequest
 	if err := ctx.BodyParser(&body); err != nil {
 		log.Errorf("Error parsing request: %v", err)
-		return ctx.SendStatus(fiber.StatusBadRequest)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot parse JSON"})
+	}
+
+	// Validate the request body
+	if validationErrors := shared.ValidateStruct(body); len(validationErrors) > 0 {
+		log.Error("Validation errors:", validationErrors)
+		return ctx.Status(fiber.StatusBadRequest).JSON(shared.FormatValidationErrors(validationErrors))
 	}
 
 	err = h.useCase.UpdateCampaign(ctx.Context(), id, &body)
